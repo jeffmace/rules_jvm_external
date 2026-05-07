@@ -1,6 +1,6 @@
 ---
 name: BOM resolution tracking
-overview: Add an opt-in `store_bom_resolution` feature to `maven.install()` that records, in the v3 lock file, which directly-declared BOM(s) manage each versionless artifact. Implemented as a standalone `BomResolverMain` Java tool invoked by `pin.sh` after resolution, with corresponding Starlark plumbing, BUILD-file `maven_bom_coordinate=` tags, and tests.
+overview: Add an opt-in `store_bom_resolution` feature to `maven.install()` that records, in the v3 lock file, which directly-declared BOM(s) manage each versionless artifact. Implemented as a standalone `BomResolverMain` Java tool invoked by `pin.sh` after resolution, with corresponding Starlark plumbing, BUILD-file `maven_bom_coordinates=` tags, and tests.
 todos:
   - id: java-bom-resolver
     content: Create BomResolver and BomResolverMain Java classes under private/tools/java/.../resolver/bom/ with Aether-based managed-deps extraction, CLI parsing, and in-place lock-file edit
@@ -21,7 +21,7 @@ todos:
     content: Add bom_resolution section parsing/rendering in V3LockFile.java and v3_lock_file.bzl; ensure empty/{} tolerance across all v3 parsers
     status: completed
   - id: tree-parser-tags
-    content: Emit maven_bom_coordinate= tags in dependency_tree_parser.bzl by attaching bom_coordinates to each artifact via v3_lock_file._get_artifacts
+    content: Emit maven_bom_coordinates= tags in dependency_tree_parser.bzl by attaching bom_coordinates to each artifact via v3_lock_file._get_artifacts
     status: completed
   - id: java-tests
     content: Add BomResolverTest as java_test with the 10 cases from spec section Testing > Java Tests
@@ -49,7 +49,7 @@ flowchart TD
     Pin --> CopyLock["copy unsorted_deps.json -> *_install.json"]
     CopyLock -- "if store_bom_resolution=True" --> BomMain["BomResolverMain<br/>(java_binary built from source,<br/>resolved via rlocation, Aether)"]
     BomMain -- "edits in place" --> LockFile["*_install.json<br/>+ bom_resolution section"]
-    LockFile --> ParserBzl["dependency_tree_parser.bzl<br/>emit maven_bom_coordinate= tags"]
+    LockFile --> ParserBzl["dependency_tree_parser.bzl<br/>emit maven_bom_coordinates= tags"]
 ```
 
 ## 1. Java: new `BomResolverMain` + `BomResolver`
@@ -201,7 +201,7 @@ In [`private/dependency_tree_parser.bzl`](private/dependency_tree_parser.bzl) `_
 
 ```python
 for bom_coord in artifact.get("bom_coordinates", []):
-    target_import_string.append("\t\t\"maven_bom_coordinate=%s\"," % bom_coord)
+    target_import_string.append("\t\t\"maven_bom_coordinates=%s\"," % bom_coord)
 ```
 
 And the same after line 590 (POM-only `java_library` fallback).
@@ -215,8 +215,8 @@ jvm_import(
     name = "com_google_auth_google_auth_library_oauth2_http",
     tags = [
         "maven_coordinates=com.google.auth:google-auth-library-oauth2-http:1.23.0",
-        "maven_bom_coordinate=com.google.cloud:libraries-bom:26.59.0",
-        "maven_bom_coordinate=org.springframework.boot:spring-boot-dependencies:3.5.14",
+        "maven_bom_coordinates=com.google.cloud:libraries-bom:26.59.0",
+        "maven_bom_coordinates=org.springframework.boot:spring-boot-dependencies:3.5.14",
         ...
     ],
 )

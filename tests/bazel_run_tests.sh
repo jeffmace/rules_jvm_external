@@ -334,11 +334,11 @@ function test_bom_resolution_jvm_import_tags() {
     REPIN=1 bazel run @unpinned_bom_resolution_coursier//:pin >> "$TEST_LOG" 2>&1
   fi
 
-  # Inspect the generated jvm_import to confirm a maven_bom_coordinate= tag is emitted.
+  # Inspect the generated jvm_import to confirm a maven_bom_coordinates= tag is emitted.
   local build_output
   build_output=$(bazel query --output=build @bom_resolution_coursier//:org_junit_jupiter_junit_jupiter_api 2>>"$TEST_LOG")
-  if ! echo "$build_output" | grep -q 'maven_bom_coordinate=org.junit:junit-bom:5.10.0'; then
-    printf "FAILED: generated jvm_import is missing maven_bom_coordinate tag\n"
+  if ! echo "$build_output" | grep -q 'maven_bom_coordinates=org.junit:junit-bom:5.10.0'; then
+    printf "FAILED: generated jvm_import is missing maven_bom_coordinates tag\n"
     echo "$build_output" | head -40
     return 1
   fi

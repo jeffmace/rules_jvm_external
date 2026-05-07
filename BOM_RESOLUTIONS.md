@@ -78,7 +78,7 @@ manage the artifact:
   are attributed to the directly-declared parent BOM.
 
 ### Generated BUILD Tags
-Artifacts managed by BOMs get one `maven_bom_coordinate=<bom>` tag per managing
+Artifacts managed by BOMs get one `maven_bom_coordinates=<bom>` tag per managing
 BOM in the generated `jvm_import` rules, in declaration order:
 
 ```python
@@ -86,9 +86,9 @@ jvm_import(
     name = "com_google_auth_google_auth_library_oauth2_http",
     tags = [
         "maven_coordinates=com.google.auth:google-auth-library-oauth2-http:1.23.0",
-        "maven_bom_coordinate=com.google.cloud:libraries-bom:26.59.0",
+        "maven_bom_coordinates=com.google.cloud:libraries-bom:26.59.0",
         # If a second BOM also manages this artifact, it appears as a second tag:
-        # "maven_bom_coordinate=org.springframework.boot:spring-boot-dependencies:3.5.14",
+        # "maven_bom_coordinates=org.springframework.boot:spring-boot-dependencies:3.5.14",
     ],
     # ...
 )
@@ -248,7 +248,7 @@ later by adding `--artifacts-file=` etc. without breaking compatibility.
       (stale stored data, harmless but worth flagging)
     - Otherwise → consume `bom_resolution` from the lock file as-is
 - **`dependency_tree_parser.bzl`** - BUILD file generation
-  - Accepts `bom_resolution` data and emits one `maven_bom_coordinate=<bom>`
+  - Accepts `bom_resolution` data and emits one `maven_bom_coordinates=<bom>`
     tag per managing BOM, in declaration order
 
 #### Data Structures
@@ -267,7 +267,7 @@ later by adding `--artifacts-file=` etc. without breaking compatibility.
    versionless-artifacts list (none of which are in the lock file). The tool
    edits the lock file in place to add the `bom_resolution` section.
 5. **BUILD Generation**: `dependency_tree_parser.bzl` reads the final lock
-   file with BOM data and emits `maven_bom_coordinate=` tags.
+   file with BOM data and emits `maven_bom_coordinates=` tags.
 
 ## Testing
 
@@ -301,7 +301,7 @@ later by adding `--artifacts-file=` etc. without breaking compatibility.
 - **`test_maven_resolution_with_boms`** - Maven resolver with BOM resolution
   - Reset: `echo '{}' > maven_resolved_install.json`
   - Assert: Selenium BOM mappings for `selenium-api` and `selenium-support`
-- **`test_multiple_boms_emit_multiple_tags`** - An artifact managed by two declared BOMs produces two separate `maven_bom_coordinate=` tags in the generated BUILD output, in declaration order.
+- **`test_multiple_boms_emit_multiple_tags`** - An artifact managed by two declared BOMs produces two separate `maven_bom_coordinates=` tags in the generated BUILD output, in declaration order.
 
 #### Disabled Cases
 - **`test_coursier_resolution_without_bom_resolution`** - Feature disabled
@@ -329,7 +329,7 @@ later by adding `--artifacts-file=` etc. without breaking compatibility.
 
 #### Generated Artifacts
 - **`test_jvm_import_bom_tags`** - BUILD file tags validation
-  - Assert: `grep -c 'maven_bom_coordinate=' >= 2` and both declared BOMs present
+  - Assert: `grep -c 'maven_bom_coordinates=' >= 2` and both declared BOMs present
 
 ### Smoke Tests
 

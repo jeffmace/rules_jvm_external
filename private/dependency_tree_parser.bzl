@@ -230,7 +230,7 @@ copy_file(
     target_import_string.append("\ttags = [")
     target_import_string.append("\t\t\"maven_coordinates=%s\"," % coordinates)
     for bom_coord in artifact.get("bom_coordinates", []):
-        target_import_string.append("\t\t\"maven_bom_coordinate=%s\"," % bom_coord)
+        target_import_string.append("\t\t\"maven_bom_coordinates=%s\"," % bom_coord)
     if len(artifact["urls"]):
         target_import_string.append("\t\t\"maven_url=%s\"," % maven_url)
         repository_url = _find_repository_url(maven_url, repository_urls)
@@ -591,7 +591,7 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
             coordinates = artifact.get("maven_coordinates", artifact["coordinates"])
             tag_lines = ["\"maven_coordinates=%s\"" % coordinates]
             for bom_coord in artifact.get("bom_coordinates", []):
-                tag_lines.append("\"maven_bom_coordinate=%s\"" % bom_coord)
+                tag_lines.append("\"maven_bom_coordinates=%s\"" % bom_coord)
             target_import_string.append("\ttags = [%s]," % ", ".join(tag_lines))
 
             alias_visibility = "\tvisibility = %s,\n" % visibility
