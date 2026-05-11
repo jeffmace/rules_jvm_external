@@ -14,11 +14,14 @@
 
 package com.github.bazelbuild.rules_jvm_external.resolver.bom;
 
+import static com.google.common.base.StandardSystemProperty.USER_HOME;
+
 import com.github.bazelbuild.rules_jvm_external.Coordinates;
 import com.github.bazelbuild.rules_jvm_external.resolver.netrc.Netrc;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -246,13 +249,23 @@ public final class BomResolver {
   private static RepositorySystemSession createSession(RepositorySystem system) {
     DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
 
-    Path tempLocalRepo;
+    Path localRepo;
     try {
-      tempLocalRepo = Files.createTempDirectory("bom-resolver-cache");
+      localRepo = Paths.get(USER_HOME.value()).resolve(".m2/repository");
+      Files.createDirectories(localRepo);
+      // Test write permission by creating and deleting a temporary file
+      Path testFile = localRepo.resolve(".bazel-test-" + System.currentTimeMillis());
+      Files.write(testFile, "test".getBytes());
+      Files.delete(testFile);
     } catch (java.io.IOException e) {
-      throw new RuntimeException("Unable to create local Aether cache", e);
+      // Fall back to temporary directory if ~/.m2/repository is not writable (e.g., in sandboxed tests)
+      try {
+        localRepo = Files.createTempDirectory("bom-resolver-cache");
+      } catch (java.io.IOException fallbackException) {
+        throw new RuntimeException("Unable to create local Aether cache", fallbackException);
+      }
     }
-    LocalRepository localRepository = new LocalRepository(tempLocalRepo.toAbsolutePath().toString());
+    LocalRepository localRepository = new LocalRepository(localRepo.toAbsolutePath().toString());
     session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepository));
     session.setIgnoreArtifactDescriptorRepositories(true);
 

@@ -383,6 +383,33 @@ EOF
   fi
 }
 
+# MANUAL: not added to the TESTS array. Expected to FAIL today: the pin
+# operation against the 7-BOM, 134-artifact set is known to exceed the 60s
+# budget with the current resolver. Run on demand via:
+#   bash tests/bazel_run_tests.sh test_bom_resolution_pin_within_60s
+function test_bom_resolution_stress_pin() {
+  local lock_file="tests/custom_maven_install/bom_resolution_stress_coursier_install.json"
+  echo '{}' > "$lock_file"
+
+  set +e
+  timeout 20 bash -c "REPIN=1 bazel run @unpinned_bom_resolution_stress_coursier//:pin" \
+      >> "$TEST_LOG" 2>&1
+  local exit_code=$?
+  set -e
+
+  # Restore the lock file regardless of success/failure
+  git checkout HEAD -- "$lock_file" 2>/dev/null || true
+
+  if [[ $exit_code -eq 124 ]]; then
+    printf "FAILED: pin did not complete within 60s (timeout)\n"
+    return 1
+  fi
+  if [[ $exit_code -ne 0 ]]; then
+    printf "FAILED: pin exited with code %s\n" "$exit_code"
+    return 1
+  fi
+}
+
 function test_coursier_resolution_with_boms() {
     # Only run for Bazel 7 or above
     RELEASE="$(bazel info release | sed -e 's/release //' | cut -d '.' -f 1)"
@@ -538,16 +565,42 @@ TESTS=(
 )
 
 function run_tests() {
+  local tests_to_run=("$@")
+  if [[ ${#tests_to_run[@]} -eq 0 ]]; then
+    tests_to_run=("${TESTS[@]}")
+  fi
+
+  local failed=0
+  local passed=0
   printf "Running bazel run tests:\n"
-  for test in ${TESTS[@]}; do
-    printf "  ${test} "
+  for test in "${tests_to_run[@]}"; do
+    if ! declare -F "$test" >/dev/null; then
+      printf "  %s UNKNOWN TEST FUNCTION\n" "$test"
+      failed=$((failed + 1))
+      continue
+    fi
+    printf "  %s " "$test"
     TEST_LOG=/tmp/${test}_test.log
     rm -f "$TEST_LOG"
     DUMPED_TEST_LOG=0
-    ${test}
-    printf "PASSED\n"
+    set +e
+    "$test"
+    local rc=$?
+    set -e
+    if [[ $rc -eq 0 ]]; then
+      printf "PASSED\n"
+      passed=$((passed + 1))
+    else
+      printf "FAILED (exit %s)\n" "$rc"
+      [[ $DUMPED_TEST_LOG -eq 0 ]] && cat "$TEST_LOG"
+      failed=$((failed + 1))
+    fi
     rm -f "$TEST_LOG"
   done
+  printf "\n%s passed, %s failed\n" "$passed" "$failed"
+  if [[ $failed -gt 0 ]]; then
+    return 1
+  fi
 }
 
 function expect_not_in_file() {
@@ -614,4 +667,4 @@ function exit_handler() {
 
 trap exit_handler EXIT
 
-run_tests
+run_tests "$@"

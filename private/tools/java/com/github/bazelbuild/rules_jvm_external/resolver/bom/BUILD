@@ -13,6 +13,14 @@ java_library(
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/netrc",
         artifact(
+            "com.google.guava:guava",
+            repository_name = "rules_jvm_external_deps",
+        ),
+        artifact(
+            "org.slf4j:slf4j-simple",
+            repository_name = "rules_jvm_external_deps",
+        ),
+        artifact(
             "org.apache.maven:maven-resolver-provider",
             repository_name = "rules_jvm_external_deps",
         ),
